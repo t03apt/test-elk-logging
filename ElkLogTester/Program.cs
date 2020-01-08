@@ -24,9 +24,10 @@ namespace ConsoleApp2
                     IndexFormat = "itron-{0:yyyy.MM.dd}",
                     MinimumLogEventLevel = Serilog.Events.LogEventLevel.Debug,
                     FailureCallback = e => Console.WriteLine("Unable to submit event " + e.MessageTemplate),
-                    EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog |
-                                       EmitEventFailureHandling.WriteToFailureSink |
-                                       EmitEventFailureHandling.RaiseCallback,
+                    EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog //|
+                                       //EmitEventFailureHandling.WriteToFailureSink |
+                                       //EmitEventFailureHandling.RaiseCallback
+                                       ,
                     Period = TimeSpan.FromMilliseconds(10)
                 });
 
