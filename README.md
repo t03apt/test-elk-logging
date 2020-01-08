@@ -1,7 +1,7 @@
 ﻿## Commands
 
 ```
-docker build . -f .\ConsoleApp2\Dockerfile --no-cache
+docker build . -f .\ElkLogTester\Dockerfile --no-cache
 docker images
 docker tag #IMAGE_ID# t03apt/testing
 
