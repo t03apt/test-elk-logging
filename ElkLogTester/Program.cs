@@ -1,52 +1,59 @@
-﻿using Serilog;
-using Serilog.Sinks.Elasticsearch;
+﻿using Itron.Platform.Hosting;
+using Itron.Platform.Hosting.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace ConsoleApp2
+namespace ElkLogTester
 {
     class Program
     {
-        static async Task Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
-            Console.WriteLine("Application started");
-            Serilog.Debugging.SelfLog.Enable(msg => Console.WriteLine($"SelfLog: {msg}"));
-
-            var url = "http://localhost:9200";
-            var loggerConfig = new LoggerConfiguration()
-                .MinimumLevel.Verbose()
-                .WriteTo.Console()
-                .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(url))
-                {
-                    AutoRegisterTemplate = true,
-                    AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv6,
-                    IndexFormat = "itron-{0:yyyy.MM.dd}",
-                    MinimumLogEventLevel = Serilog.Events.LogEventLevel.Debug,
-                    FailureCallback = e => Console.WriteLine("Unable to submit event " + e.MessageTemplate),
-                    EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog //|
-                                       //EmitEventFailureHandling.WriteToFailureSink |
-                                       //EmitEventFailureHandling.RaiseCallback
-                                       ,
-                    Period = TimeSpan.FromMilliseconds(10)
-                });
-
-            Serilog.Debugging.SelfLog.Enable(Console.WriteLine);
-            using (var logger = loggerConfig.CreateLogger())
+            try
             {
-                logger.Information("Data logged");
-                logger.Information("Text: {TextField}", "text");
-                await Task.Delay(5000);
-                logger.Information("Int: {TextField}", 0);
-                await Task.Delay(5000);
-                logger.Information("Date: {TextField}", DateTime.Now);
-                await Task.Delay(5000);
-                logger.Information("Boolean: {TextField}", true);
-                await Task.Delay(5000);
+                //var url = "http://localhost:9200";
+                //var loggerConfig = new LoggerConfiguration()
+                //    .MinimumLevel.Verbose()
+                //    .WriteTo.Console()
+                //    .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(url))
+                //    {
+                //        AutoRegisterTemplate = true,
+                //        AutoRegisterTemplateVersion = AutoRegisterTemplateVersion.ESv6,
+                //        IndexFormat = "itron-{0:yyyy.MM.dd}",
+                //        MinimumLogEventLevel = Serilog.Events.LogEventLevel.Debug,
+                //        Period = TimeSpan.FromMilliseconds(10)
+                //    });
+                var builder = new HostBuilder()
+                    .UsePlatform(new DependencyInjectionContext(typeof(Program))
+                    {
+                        Args = args,
+                        LoadModules = true,
+                        AddFileHealthReporter = true,
+                        ConfigureConfiguration = (configBuilder) =>
+                        {
+                            configBuilder.AddJsonFile($"appsettings.json", optional: false, reloadOnChange: false);
+                            configBuilder.AddJsonFile($"appsettings.local.json", optional: true, reloadOnChange: false);
+                        },
+                        ConfigureDependencies = (services, configuration, logger) =>
+                        {
+                            services.AddHostedService<HostedService>();
+                        }
+                    });
+
+                var host = builder.UseConsoleLifetime().Build();
+                host.InitializePlatform();
+                await host.RunAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return 1;
             }
 
-            Console.WriteLine("Waiting 5 minutes before exit");
-            Thread.Sleep(TimeSpan.FromMinutes(5));
+            return 0;
         }
     }
 }

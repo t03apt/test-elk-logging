@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: gds-log-tester
+  labels:
+    app: gds-log-tester
+spec:
+  serviceName: gds-log-tester
+  replicas: 3
+  selector:
+    matchLabels:
+      app: gds-log-tester
+  template:
+    metadata:
+      labels:
+        app: gds-log-tester
+    spec:
+      containers:
+      - name: gds-log-tester
+        image: itronicsp.azurecr.io/gds-log-tester:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Production
+        volumeMounts:
+        - name: platform-logging-config
+          mountPath: /etc/global/configuration/logging
+        - name: platform-metrics-config
+          mountPath: /etc/global/configuration/metrics
+        - name: platform-tracing-config
+          mountPath: /etc/global/configuration/tracing
+        - name: platform-capability-secrets
+          mountPath: /etc/global/secrets/capability
+        - name: platform-capability-config
+          mountPath: /etc/global/configuration/capability
+      volumes:
+      - name: platform-capability-config
+        configMap:
+          name: platform-capability-config.json
+          optional: false
+      - name: platform-capability-secrets
+        secret:
+          secretName: platform-capability-secrets.json
+          optional: false
+      - name: platform-logging-config
+        configMap:
+          name: platform-logging-config.json
+          optional: false
+      - name: platform-metrics-config
+        configMap:
+          name: platform-metrics-config.json
+          optional: false
+      - name: platform-tracing-config
+        configMap:
+          name: platform-tracing-config.json
+          optional: false
+      - name: podinfo
+        downwardAPI:
+          items:
+          - path: "labels"
+            fieldRef:
+              fieldPath: metadata.labels
+          - path: "annotations"
+            fieldRef:
+              fieldPath: metadata.annotations
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - gds-log-tester
+              topologyKey: kubernetes.io/hostname  

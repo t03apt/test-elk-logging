@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElkLogTester", "ElkLogTeste
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{854D1623-ADDF-4C82-A631-7AB7BA202DD3}"
 	ProjectSection(SolutionItems) = preProject
+		kubernetes-deployment.yml = kubernetes-deployment.yml
+		NuGet.config = NuGet.config
 		README.md = README.md
 	EndProjectSection
 EndProject
